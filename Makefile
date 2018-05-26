@@ -1,17 +1,9 @@
 GCC=gcc -Wall
-FLAGS=-L codigo-pato/target -lcodp
 
-OBJECTS = $(patsubst src/%.c, target/%.o, $(wildcard src/*.c))
-HEADERS = $(wildcard src/*.h)
-
-target/%.o: src/%.c $(HEADERS)
+lib: src/lib.c
 	mkdir -p target
-	$(GCC) -c $< -o $@ $(FLAGS)
-
-run: $(OBJECTS)
-	mkdir -p target
-	$(GCC) target/*.o -o target/main $(FLAGS)
-	./target/main
+	$(GCC) -c src/lib.c -o target/lib.o -fPIC -L codigo-pato/target -lcodp
+	$(GCC) target/lib.o -shared -o target/codp.so
 
 clean:
 	rm -r target
