@@ -5,6 +5,8 @@
 
 #include "../codigo-pato/include/codp.h"
 
+static struct instruction checkinstruction(lua_State *L, int arg);
+
 static int newcore(lua_State *L) {
     int m = luaL_checkinteger(L, 1);
     struct core *core = (struct core *) lua_newuserdata(L, sizeof(struct core));
@@ -12,6 +14,26 @@ static int newcore(lua_State *L) {
     luaL_getmetatable(L, "codp.core");
     lua_setmetatable(L, -2);
     return 1;
+}
+
+static struct core *checkcore(lua_State *L, int arg) {
+    void *core = luaL_checkudata(L, arg, "codp.core");
+    luaL_argcheck(L, core != NULL, arg, "`codp.core' expected");
+    return (struct core *)core;
+}
+
+static int coreput(lua_State *L) {
+    struct core *core = checkcore(L, 1);
+    addr_t addr = luaL_checkinteger(L, 2);
+    struct instruction ir = checkinstruction(L, 3);
+    codp_core_put(core, addr, ir);
+    return 0;
+}
+
+static int coreprint(lua_State *L) {
+    struct core *core = checkcore(L, 1);
+    codp_core_print(core);
+    return 0;
 }
 
 static enum opcode checkopcode(lua_State *L, int arg) {
@@ -48,26 +70,26 @@ static struct operand checkoperand(lua_State *L) {
     return operand;
 }
 
-static struct instruction checkinstruction(lua_State *L) {
+static struct instruction checkinstruction(lua_State *L, int arg) {
     struct instruction instruction;
 
     lua_pushstring(L, "opcode");
-    lua_gettable(L, 1);
+    lua_gettable(L, arg);
     instruction.opcode = checkopcode(L, -1);
     lua_pop(L, 1);
 
     lua_pushstring(L, "mode");
-    lua_gettable(L, 1);
+    lua_gettable(L, arg);
     instruction.modifier = checkmodifier(L, -1);
     lua_pop(L, 1);
 
     lua_pushstring(L, "a");
-    lua_gettable(L, 1);
+    lua_gettable(L, arg);
     instruction.a = checkoperand(L);
     lua_pop(L, 1);
 
     lua_pushstring(L, "b");
-    lua_gettable(L, 1);
+    lua_gettable(L, arg);
     instruction.b = checkoperand(L);
     lua_pop(L, 1);
 
@@ -75,7 +97,7 @@ static struct instruction checkinstruction(lua_State *L) {
 }
 
 static int printinstruction(lua_State *L) {
-    struct instruction ir = checkinstruction(L);
+    struct instruction ir = checkinstruction(L, 1);
     codp_print_instruction(&ir);
     return 0;
 }
@@ -88,6 +110,8 @@ static int math_sin(lua_State *L) {
 static const luaL_Reg codplib[] = {
     {"sin", math_sin},
     {"newcore", newcore},
+    {"coreput", coreput},
+    {"coreprint", coreprint},
     {"printinstruction", printinstruction},
     {NULL, NULL}
 };
