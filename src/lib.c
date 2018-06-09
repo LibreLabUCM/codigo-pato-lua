@@ -3,7 +3,80 @@
 #include "lua.h"
 #include "lauxlib.h"
 
-//#include "../codigo-pato/include/codp.h"
+#include "../codigo-pato/include/codp.h"
+
+static int newcore(lua_State *L) {
+    int m = luaL_checkinteger(L, 1);
+    struct core *core = (struct core *) lua_newuserdata(L, sizeof(struct core));
+    codp_core_init(core, m);
+    return 1;
+}
+
+static enum opcode checkopcode(lua_State *L, int arg) {
+    int opcode = luaL_checkinteger(L, arg);
+    luaL_argcheck(L, opcode >= DAT && opcode <= SPL, arg, "`opcode' out of bounds");
+    return opcode;
+}
+
+static enum modifier checkmodifier(lua_State *L, int arg) {
+    int modifier = luaL_checkinteger(L, arg);
+    luaL_argcheck(L, modifier >= A && modifier <= I, arg, "`modifier' out of bounds");
+    return modifier;
+}
+
+static enum mode checkmode(lua_State *L, int arg) {
+    int mode = luaL_checkinteger(L, arg);
+    luaL_argcheck(L, mode >= IMMEDIATE && mode <= INCREMENT, arg, "`mode' out of bounds");
+    return mode;
+}
+
+static struct operand checkoperand(lua_State *L) {
+    struct operand operand;
+
+    lua_pushstring(L, "mode");
+    lua_gettable(L, -2);
+    operand.mode = checkmode(L, -1);
+    lua_pop(L, 1);
+
+    lua_pushstring(L, "number");
+    lua_gettable(L, -2);
+    operand.number = luaL_checkinteger(L, -1);
+    lua_pop(L, 1);
+
+    return operand;
+}
+
+static struct instruction checkinstruction(lua_State *L) {
+    struct instruction instruction;
+
+    lua_pushstring(L, "opcode");
+    lua_gettable(L, 1);
+    instruction.opcode = checkopcode(L, -1);
+    lua_pop(L, 1);
+
+    lua_pushstring(L, "mode");
+    lua_gettable(L, 1);
+    instruction.modifier = checkmodifier(L, -1);
+    lua_pop(L, 1);
+
+    lua_pushstring(L, "a");
+    lua_gettable(L, 1);
+    instruction.a = checkoperand(L);
+    lua_pop(L, 1);
+
+    lua_pushstring(L, "b");
+    lua_gettable(L, 1);
+    instruction.b = checkoperand(L);
+    lua_pop(L, 1);
+
+    return instruction;
+}
+
+static int printinstruction(lua_State *L) {
+    struct instruction ir = checkinstruction(L);
+    codp_print_instruction(&ir);
+    return 0;
+}
 
 static int math_sin(lua_State *L) {
     lua_pushnumber(L, sin(luaL_checknumber(L, 1)));
@@ -12,6 +85,8 @@ static int math_sin(lua_State *L) {
 
 static const luaL_Reg codplib[] = {
     {"sin", math_sin},
+    {"newcore", newcore},
+    {"printinstruction", printinstruction},
     {NULL, NULL}
 };
 
