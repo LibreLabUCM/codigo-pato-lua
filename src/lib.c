@@ -9,6 +9,8 @@ static int newcore(lua_State *L) {
     int m = luaL_checkinteger(L, 1);
     struct core *core = (struct core *) lua_newuserdata(L, sizeof(struct core));
     codp_core_init(core, m);
+    luaL_getmetatable(L, "codp.core");
+    lua_setmetatable(L, -2);
     return 1;
 }
 
@@ -91,6 +93,7 @@ static const luaL_Reg codplib[] = {
 };
 
 int luaopen_codp(lua_State *L) {
+    luaL_newmetatable(L, "codp.core");
     luaL_newlib(L, codplib);
     return 1;
 }
