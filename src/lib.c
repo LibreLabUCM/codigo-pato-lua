@@ -110,14 +110,23 @@ static int math_sin(lua_State *L) {
 static const luaL_Reg codplib[] = {
     {"sin", math_sin},
     {"newcore", newcore},
-    {"coreput", coreput},
-    {"coreprint", coreprint},
     {"printinstruction", printinstruction},
+    {NULL, NULL}
+};
+
+static const struct luaL_Reg codp_core_methods[] = {
+    {"put", coreput},
+    {"print", coreprint},
     {NULL, NULL}
 };
 
 int luaopen_codp(lua_State *L) {
     luaL_newmetatable(L, "codp.core");
+    lua_pushstring(L, "__index");
+    lua_pushvalue(L, -2);  // push the metatable
+    lua_settable(L, -3);  // metatable.__index = metatable
+    luaL_setfuncs(L, codp_core_methods, 0);
+
     luaL_newlib(L, codplib);
     return 1;
 }
