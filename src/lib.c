@@ -6,6 +6,7 @@
 #include "../codigo-pato/include/codp.h"
 
 static struct instruction checkinstruction(lua_State *L, int arg);
+static void pushinstruction(lua_State *L, struct instruction *instruction);
 
 static int newcore(lua_State *L) {
     int m = luaL_checkinteger(L, 1);
@@ -34,6 +35,14 @@ static int coreprint(lua_State *L) {
     struct core *core = checkcore(L, 1);
     codp_core_print(core);
     return 0;
+}
+
+static int coreget(lua_State *L) {
+    struct core *core = checkcore(L, 1);
+    int addr = luaL_checkinteger(L, 2);
+    struct instruction *ir = codp_core_get(core, addr);
+    pushinstruction(L, ir);
+    return 1;
 }
 
 static enum opcode checkopcode(lua_State *L, int arg) {
@@ -78,7 +87,7 @@ static struct instruction checkinstruction(lua_State *L, int arg) {
     instruction.opcode = checkopcode(L, -1);
     lua_pop(L, 1);
 
-    lua_pushstring(L, "mode");
+    lua_pushstring(L, "modifier");
     lua_gettable(L, arg);
     instruction.modifier = checkmodifier(L, -1);
     lua_pop(L, 1);
@@ -94,6 +103,38 @@ static struct instruction checkinstruction(lua_State *L, int arg) {
     lua_pop(L, 1);
 
     return instruction;
+}
+
+static void pushoperand(lua_State *L, struct operand *operand) {
+    lua_createtable(L, 0, 2);
+
+    lua_pushstring(L, "mode");
+    lua_pushinteger(L, operand->mode);
+    lua_settable(L, -3);
+
+    lua_pushstring(L, "number");
+    lua_pushinteger(L, operand->number);
+    lua_settable(L, -3);
+}
+
+static void pushinstruction(lua_State *L, struct instruction *instruction) {
+    lua_createtable(L, 0, 4);
+
+    lua_pushstring(L, "opcode");
+    lua_pushinteger(L, instruction->opcode);
+    lua_settable(L, -3);
+
+    lua_pushstring(L, "modifier");
+    lua_pushinteger(L, instruction->modifier);
+    lua_settable(L, -3);
+
+    lua_pushstring(L, "a");
+    pushoperand(L, &instruction->a);
+    lua_settable(L, -3);
+
+    lua_pushstring(L, "b");
+    pushoperand(L, &instruction->b);
+    lua_settable(L, -3);
 }
 
 static int printinstruction(lua_State *L) {
@@ -116,6 +157,7 @@ static const luaL_Reg codplib[] = {
 
 static const struct luaL_Reg codp_core_methods[] = {
     {"put", coreput},
+    {"get", coreget},
     {"print", coreprint},
     {NULL, NULL}
 };
