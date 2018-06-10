@@ -78,7 +78,7 @@ static struct instruction checkinstruction(lua_State *L, int arg) {
     instruction.opcode = checkopcode(L, -1);
     lua_pop(L, 1);
 
-    lua_pushstring(L, "mode");
+    lua_pushstring(L, "modifier");
     lua_gettable(L, arg);
     instruction.modifier = checkmodifier(L, -1);
     lua_pop(L, 1);

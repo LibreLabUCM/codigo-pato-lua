@@ -6,7 +6,7 @@ core:put(
   2,
   {
     opcode = 9,
-    mode = 6,
+    modifier = 6,
     a = {
       mode = 3,
       number = 7
@@ -20,7 +20,7 @@ core:put(
   0,
   {
     opcode = 06,
-    mode = 2,
+    modifier = 2,
     a = {
       mode = 1,
       number = 6
